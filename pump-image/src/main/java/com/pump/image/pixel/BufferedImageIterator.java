@@ -15,6 +15,9 @@ import java.awt.image.IndexColorModel;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import com.pump.image.BasicBufferedImageFactory;
+import com.pump.image.BufferedImageFactory;
+
 /** This interfaces the <code>PixelIterator</code> model with 
  * <code>BufferedImages</code>.
  * <p>You cannot directly instantiate this class: use one of
@@ -138,6 +141,26 @@ public abstract class BufferedImageIterator implements PixelIterator {
 	 * @return a BufferedImage
 	 */
 	public static BufferedImage create(PixelIterator i,BufferedImage dest) {
+		return create(i, dest, null);
+	}
+	
+	/** Creates a BufferedImage from a PixelIterator.
+	 * 
+	 * @param i the pixel data
+	 * @param dest an optional image to write the image data to.
+	 * @return a BufferedImage
+	 */
+	public static BufferedImage create(PixelIterator i,BufferedImageFactory factory) {
+		return create(i, null, factory);
+	}
+	
+	/** Creates a BufferedImage from a PixelIterator.
+	 * 
+	 * @param i the pixel data
+	 * @param dest an optional image to write the image data to.
+	 * @return a BufferedImage
+	 */
+	private static BufferedImage create(PixelIterator i,BufferedImage dest,BufferedImageFactory factory) {
 		int type = i.getType();
 		
 		int w = i.getWidth();
@@ -150,7 +173,7 @@ public abstract class BufferedImageIterator implements PixelIterator {
 				throw new IllegalArgumentException("size mismatch ("+dest.getWidth()+"x"+dest.getHeight()+" is too small for "+w+"x"+h+")");
 		} else if(i instanceof IndexedBytePixelIterator) {
 			IndexColorModel indexModel = ((IndexedBytePixelIterator)i).getIndexColorModel();
-			dest = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_INDEXED, indexModel);
+			dest = factory.create(w, h, BufferedImage.TYPE_BYTE_INDEXED, indexModel);
 		} else {
 			int imageType = type;
 			if(type==PixelIterator.TYPE_4BYTE_ARGB)
@@ -159,7 +182,7 @@ public abstract class BufferedImageIterator implements PixelIterator {
 				imageType = BufferedImage.TYPE_4BYTE_ABGR_PRE;
 			if(type==PixelIterator.TYPE_3BYTE_RGB)
 				imageType = BufferedImage.TYPE_3BYTE_BGR;
-			dest = new BufferedImage(w, h, imageType);
+			dest = factory.create(w, h, imageType);
 		}
 		
 		if(i instanceof IntPixelIterator) {

@@ -20,6 +20,8 @@ import java.io.InputStream;
 import java.net.URL;
 
 import com.pump.blog.Blurb;
+import com.pump.image.BasicBufferedImageFactory;
+import com.pump.image.BufferedImageFactory;
 import com.pump.image.ImageSize;
 import com.pump.image.bmp.BmpDecoderIterator;
 
@@ -87,6 +89,10 @@ public class Scaling {
 	 * or <code>BufferedImage.TYPE_INT_RGB</code>.
 	 */
 	public static BufferedImage scale(File source,int preferredType,Dimension destSize) {
+		return scale(source, preferredType, destSize, new BasicBufferedImageFactory());
+	}
+	
+	public static BufferedImage scale(File source,int preferredType,Dimension destSize,BufferedImageFactory factory) {
 		//NOTE: this method mirrors scale(URL, ...), so when you modify one: modify the other
 		String pathLower = source.getAbsolutePath().toLowerCase();
 		if(pathLower.endsWith(".bmp")) {
@@ -105,7 +111,7 @@ public class Scaling {
 				} else {
 					throw new IllegalArgumentException("unrecognized type: "+preferredType);
 				}
-				BufferedImage image = BufferedImageIterator.create(finalIter, null);
+				BufferedImage image = BufferedImageIterator.create(finalIter, factory);
 				return image;
 			} catch(IOException e) {
 				return null;
@@ -113,7 +119,7 @@ public class Scaling {
 		}
 		Image image = Toolkit.getDefaultToolkit().createImage(source.getAbsolutePath());
 		try {
-			return scale( image, null, destSize);
+			return scale( image, null, destSize, factory);
 		} finally {
 			if(image!=null)
 				image.flush();
@@ -129,6 +135,18 @@ public class Scaling {
 	 * or <code>BufferedImage.TYPE_INT_RGB</code>.
 	 */
 	public static BufferedImage scale(URL source,int preferredType,Dimension destSize) {
+		return scale(source, preferredType, destSize, new BasicBufferedImageFactory());
+	}
+
+	/** Scales the source image file to a new size.
+	 * 
+	 * @param source the source image file.
+	 * @param preferredType <code>TYPE_INT_RGB</code>, <code>TYPE_INT_ARGB</code>, <code>TYPE_3BYTE_BGR</code>, <code>TYPE_4BYTE_ABGR</code>.
+	 * @param destSize the size of the new image.
+	 * @return a new scaled image of type <code>BufferedImage.TYPE_INT_ARGB</code>
+	 * or <code>BufferedImage.TYPE_INT_RGB</code>.
+	 */
+	public static BufferedImage scale(URL source,int preferredType,Dimension destSize,BufferedImageFactory factory) {
 		//NOTE: this method mirrors scale(File, ...), so when you modify one: modify the other
 		String pathLower = source.toString().toLowerCase();
 		if(pathLower.endsWith(".bmp")) {
@@ -149,7 +167,7 @@ public class Scaling {
 				} else {
 					throw new IllegalArgumentException("unrecognized type: "+preferredType);
 				}
-				BufferedImage image = BufferedImageIterator.create(finalIter, null);
+				BufferedImage image = BufferedImageIterator.create(finalIter, factory);
 				return image;
 			} catch(IOException e) {
 				return null;
@@ -250,6 +268,30 @@ public class Scaling {
 	 * <code>dest</code> argument was provided.
 	 */
 	public static BufferedImage scale(Image source,BufferedImage dest,Dimension destSize) {
+		return scale(source, dest, destSize, new BasicBufferedImageFactory());
+	}
+
+
+	/** Scales the source image into the dest.
+	 * 
+	 * @param source the source image.  This may not be null.
+	 * @param dest the destination image.  If non-null: this image must
+	 * be at least <code>destSize</code> pixels in size or an
+	 * exception will be thrown.  If this is null: an image will
+	 * be created that is <code>destSize</code> pixels.
+	 * <p>This argument can be the same as the
+	 * <code>source</code> argument.  This may save some memory
+	 * allocation, but it will permanently alter the
+	 * source image.
+	 * <p>Also this need to be of
+	 * type <code>BufferedImage.TYPE_INT_ARGB</code>.
+	 * @param destSize the dimensions to write to. It is guaranteed
+	 * that these pixels will be replaced in the dest image. If this is null
+	 * then the image will not be scaled.
+	 * @return the <code>dest</code> argument, or a new image if no
+	 * <code>dest</code> argument was provided.
+	 */
+	public static BufferedImage scale(Image source,BufferedImage dest,Dimension destSize, BufferedImageFactory factory) {
 		if(source instanceof BufferedImage) {
 			return scale( (BufferedImage)source, dest, destSize);
 		}
@@ -274,7 +316,7 @@ public class Scaling {
 		int destType = dest!=null ? dest.getType() : BufferedImage.TYPE_INT_ARGB;
 		PixelIterator iter = GenericImageSinglePassIterator.get(source, destType);
 		PixelIterator scalingIter = destSize==null ? iter : ScalingIterator.get(iter, destSize.width, destSize.height);
-		return BufferedImageIterator.create(scalingIter, null);
+		return BufferedImageIterator.create(scalingIter, factory);
 	}
 
 	/** Scales the source image proportionally to a new, smaller size.

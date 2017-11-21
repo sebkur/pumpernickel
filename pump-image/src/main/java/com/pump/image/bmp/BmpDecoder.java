@@ -200,7 +200,7 @@ public class BmpDecoder {
 		if(ratio<1) {
 			i = ScalingIterator.get(i, ratio);
 		}
-		return BufferedImageIterator.create( i, null );
+		return BufferedImageIterator.create( i, (BufferedImage) null );
 	}
 
 	/** Create a thumbnail of a BMP file.

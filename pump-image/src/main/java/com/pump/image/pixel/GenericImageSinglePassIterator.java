@@ -810,11 +810,11 @@ public abstract class GenericImageSinglePassIterator implements PixelIterator {
 		Dimension currentSize = new Dimension( iter.getWidth(), iter.getHeight() );
 		if(currentSize.width<=maxSize.width &&
 				currentSize.height<=maxSize.height) {
-			return BufferedImageIterator.create(iter, null);
+			return BufferedImageIterator.create(iter, (BufferedImage) null);
 		}
 		Dimension newSize = Dimension2D.scaleProportionally(currentSize, maxSize);
 		PixelIterator scalingIter = ScalingIterator.get(iter, newSize.width, newSize.height);
-		return BufferedImageIterator.create(scalingIter, null);
+		return BufferedImageIterator.create(scalingIter, (BufferedImage) null);
 	}
 
 

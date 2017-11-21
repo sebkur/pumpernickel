@@ -57,9 +57,12 @@ public class ImageLoader {
 	private static final DirectColorModel RGBModel = new DirectColorModel(32,0xff0000,0xff00,0xff,0);
 
 	public static BufferedImage createImage(URL url) {
+		return createImage(url, new BasicBufferedImageFactory());
+	}
+	public static BufferedImage createImage(URL url,BufferedImageFactory factory) {
 		if(url==null) throw new NullPointerException();
 		try {
-			return createImage(Toolkit.getDefaultToolkit().createImage(url), url.toString());
+			return createImage(Toolkit.getDefaultToolkit().createImage(url), url.toString(), factory);
 		} catch(RuntimeException e) {
 			System.err.println("url: "+url);
 			throw e;
@@ -67,8 +70,12 @@ public class ImageLoader {
 	}
 
 	public static BufferedImage createImage(File file) {
+		return createImage(file, new BasicBufferedImageFactory());
+	}
+
+	public static BufferedImage createImage(File file,BufferedImageFactory factory) {
 		Image i = Toolkit.getDefaultToolkit().createImage(file.getAbsolutePath());
-		return createImage(i, file.getAbsolutePath());
+		return createImage(i, file.getAbsolutePath(), factory);
 	}
 	
 	/** This returns an ARGB BufferedImage depicting the argument <code>i</code>.
@@ -79,22 +86,34 @@ public class ImageLoader {
 	 * @return an ARGB BufferedImage identical to the argument.
 	 */
 	public static BufferedImage createImage(Image i) {
+		return createImage(i, new BasicBufferedImageFactory());
+	}
+
+	
+	/** This returns an ARGB BufferedImage depicting the argument <code>i</code>.
+	 * <P>Note that if <code>i</code> is already an ARGB BufferedImage, then it
+	 * is immediately returned and this method does NOT duplicate it.
+	 * 
+	 * @param i
+	 * @return an ARGB BufferedImage identical to the argument.
+	 */
+	public static BufferedImage createImage(Image i, BufferedImageFactory factory) {
 		if(i instanceof BufferedImage) {
 			BufferedImage bi = (BufferedImage)i;
 			int type = bi.getType();
 			if(type==BufferedImage.TYPE_INT_ARGB)
 				return bi;
-			BufferedImage newImage = new BufferedImage(bi.getWidth(),bi.getHeight(),BufferedImage.TYPE_INT_ARGB);
+			BufferedImage newImage = factory.create(bi.getWidth(),bi.getHeight(),BufferedImage.TYPE_INT_ARGB);
 			Graphics2D g = newImage.createGraphics();
 			g.drawImage(bi,0,0,null);
 			g.dispose();
 			return newImage;
 		}
-		return createImage(i, null);
+		return createImage(i, null, factory);
 	}
 	
-	protected static BufferedImage createImage(Image i,String description) {
-		ImageLoader l = new ImageLoader(i.getSource(),null,null,description);
+	protected static BufferedImage createImage(Image i,String description,BufferedImageFactory factory) {
+		ImageLoader l = new ImageLoader(i.getSource(),null,null,description, factory);
 		return l.getImage();
 	}
 	
@@ -127,6 +146,7 @@ public class ImageLoader {
 	ImageProducer producer;
 	float progress = 0;
 	String description;
+	BufferedImageFactory factory;
 	
 	/** This constructs an ImageLoader.  As soon as an ImageLoader is constructed
 	 * the <code>ImageProducer</code> is asked to start producing data.  (However
@@ -141,9 +161,12 @@ public class ImageLoader {
 	 * before the loading begins
 	 * @param description an optional description that may be useful for debugging
 	 */
-	public ImageLoader(ImageProducer p,Cancellable c,ChangeListener changeListener,String description) {
+	public ImageLoader(ImageProducer p,Cancellable c,ChangeListener changeListener,String description,BufferedImageFactory factory) {
 		cancellable = c;
 		producer = p;
+		if(factory==null)
+			factory = new BasicBufferedImageFactory();
+		this.factory = factory;
 		addChangeListener(changeListener);
 		consumer = new InnerImageConsumer();
 		p.startProduction(consumer);
@@ -379,7 +402,7 @@ public class ImageLoader {
 					}
 				}
 				size = new Dimension(w,h);
-				dest = new BufferedImage(w,h,BufferedImage.TYPE_INT_ARGB);
+				dest = factory.create(w,h,BufferedImage.TYPE_INT_ARGB);
 				row = new int[w];
 				fireChangeListeners();
 			} catch(RuntimeException e) {

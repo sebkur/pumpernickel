@@ -18,6 +18,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
@@ -36,11 +37,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import com.pump.animation.BufferedAnimationPanel;
+import com.pump.geom.TransformUtils;
 import com.pump.image.transition.AbstractTransition;
 import com.pump.image.transition.Transition;
 import com.pump.swing.AnimationController;
@@ -65,10 +66,36 @@ public abstract class TransitionDemo extends JPanel {
 	 */
 	public TransitionDemo(Transition[] transitions,boolean includeInterpolationControls) {
 		this(AbstractTransition.createImage("A",true),
-				AbstractTransition.createImage("B",false),
+				flipHorizontal(AbstractTransition.createImage("B",false)
+						),
 				transitions, includeInterpolationControls);
 	}
     
+	/**
+	 * Flip an image horizontally.
+	 * 
+	 * @param bi the image to flip.
+	 * @return the new horizontally flipped image.
+	 */
+	public static BufferedImage flipHorizontal(BufferedImage bi) {
+		BufferedImage copy = new BufferedImage(bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_INT_RGB);
+		Graphics2D g = copy.createGraphics();
+		
+		AffineTransform tx = new AffineTransform();
+		tx.scale(-1,1);
+		tx.translate(-bi.getWidth(), 0);
+		g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		g.transform(tx);
+		g.drawImage(bi, 0, 0, null);
+		g.dispose();
+		return copy;
+	}
+
+	
 	/**
 	 * 
 	 * @param includeInterpolationControls true if a combobox for the interpolation hint should

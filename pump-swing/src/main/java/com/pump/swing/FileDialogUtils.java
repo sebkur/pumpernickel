@@ -16,8 +16,19 @@ import java.io.File;
 
 import com.pump.io.SuffixFilenameFilter;
 
+/**
+ * A collection of static methods related to file dialogs.
+ */
 public class FileDialogUtils {
-	
+
+	/**
+	 * Show a "Open File" file dialog.
+	 * 
+	 * @param f the frame that contains this dialog.
+	 * @param title the dialog title (required). This may be null
+	 * @param extensions the optional file extensions that are supported.
+	 * @return the File the user asked to open, or null if the user cancelled.
+	 */
 	public static File showOpenDialog(Frame f,String title,String... extensions) {
 		FileDialog fd = new FileDialog(f, title);
 		fd.setMode(FileDialog.LOAD);
@@ -30,14 +41,40 @@ public class FileDialogUtils {
 			return null;
 		return new File(fd.getDirectory() + fd.getFile());
 	}
-	
+
+	/**
+	 * Show a "Save As" file dialog.
+	 * 
+	 * @param f the frame that contains this dialog.
+	 * @param title the dialog title (required)
+	 * @param extension the file extension (required)
+	 * @return the File the user asked to save to, or null if the user cancelled.
+	 */
 	public static File showSaveDialog(Frame f,String title,String extension) {
+		return showSaveDialog(f, title, null, extension);
+	}
+
+	/**
+	 * Show a "Save As" file dialog.
+	 * 
+	 * @param f the frame that contains this dialog.
+	 * @param title the dialog title (required)
+	 * @param fileName an optional starting file name (may be null)
+	 * @param extension the file extension (required)
+	 * @return the File the user asked to save to, or null if the user cancelled.
+	 */
+	public static File showSaveDialog(Frame f,String title,String fileName,String extension) {
 		if(extension.startsWith("."))
 			extension = extension.substring(1);
 		
 		FileDialog fd = new FileDialog(f, title);
 		fd.setMode(FileDialog.SAVE);
 		fd.setFilenameFilter(new SuffixFilenameFilter(extension));
+		if(fileName!=null) {
+			fd.setFile(fileName+'.'+extension);
+		} else {
+			fd.setFile("Untitled."+extension);
+		}
 		fd.pack();
 		fd.setLocationRelativeTo(null);
 		fd.setVisible(true);
